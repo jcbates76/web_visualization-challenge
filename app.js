@@ -1,26 +1,23 @@
 // Drop down button has sample ID data
 // Pull in the sample.json data. 
 let data = d3.json("samples.json").then(data => {
-
-    // Pull the data from the json
-    const samples = data.samples;
-    const metadata = data.metadata;
+    // Pull the names from the data for the drop down
     const names = data.names;
-
     // ID names listed into the drop down
-    let dropDown = d3.select('#selDataset')
+    let dropDown = d3.select('#selDataset');
+    // Iterate through all of the names and append into the drop down
     names.forEach(name => {
         dropDown.append('option').text(name).property('value', name);
     });
 });
 
-// Function to pull data based on drop down selection
+// Functions to update the demographic and chart sections when a Subject ID is selected
 function optionChanged(selection) {
     demographicInfo(selection);
     buildCharts(selection)
 };
 
-// Function to pull the demographic metadata for sample ID
+// Function to pull the demographic metadata for sample ID selected
 function demographicInfo(id) {
     d3.json("samples.json").then(data => {
         // Define a variable to store the metadata form the json
@@ -39,29 +36,37 @@ function demographicInfo(id) {
     });
 };
 
-// Function to plot the OTU's for a given sample ID
+// Function to generate a horizontal bar plot and bubble chart
 function buildCharts(id) {
+    // Pull the data from the json for to populate the charts
     d3.json("samples.json").then(data => {
+        // Filter the data to only pull the data for the sample ID selected
         let filteredData = data.samples.filter(SampleId => SampleId.id == id)[0];
+        // Define a variable for the sample values
         let sampleValues = filteredData.sample_values;
+        // Define a variable for the sample OTU ID's
         let sampleIds = filteredData.otu_ids;
+        // Define a variable for the sample labels
         let sampleLabels = filteredData.otu_labels;
         
         // Build the horizontal bar chart
         // Setup the variables and chart parameters
+        // The slice will take the top 10 values from the array
+        // The array is reversed so that the values will show in the chart from top to bottom (default is bottom to top)
+        // The map command will convert the otu_ID into a string which will contain the term "OTU".  
         let trace1 = {
             x: sampleValues.slice(0,10).reverse(),
             y: sampleIds.slice(0,10).map(otu_id => `OTU ${otu_id}`).reverse(),
             text: sampleLabels.slice(0,10).reverse(),
             type: 'bar',
-            orientation: 'h'
+            orientation: 'h'  // Designation for the horizontal bar chart
         };
         let barChartVariables = [trace1];
-        // Setup the layout of the chart
+        // Setup the layout of the horizontal bar chart
         let layout1 = {
             title: `Top 10 OTU's in Subject ID ${id}.`
         };
-        // Plot the chart
+        // Plot the horizontal bar chart
         Plotly.newPlot("bar", barChartVariables, layout1);
 
         //Build the bubble chart
@@ -76,9 +81,9 @@ function buildCharts(id) {
                 color: sampleIds
             }
         };
-
         let bubbleChartVariables = [trace2];
 
+        // Setup the layout of the bubble chart
         let layout2 = {
             title: `Values for Subject ID ${id}`,
             showlegend: false,
@@ -86,7 +91,7 @@ function buildCharts(id) {
             width: 1200
         };
 
+        // Plot the bubble chart
         Plotly.newPlot('bubble', bubbleChartVariables, layout2);
-        
     });
 };
